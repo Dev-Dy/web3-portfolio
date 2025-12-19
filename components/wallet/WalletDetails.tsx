@@ -1,15 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { motion } from 'framer-motion'
-
-function u8aToHex(u8a: Uint8Array) {
-  return Array.from(u8a)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
+import { Wallet, RefreshCw, PenLine, LogOut, Loader2, Copy, Check } from 'lucide-react'
 
 export function WalletDetails() {
   const { wallet, publicKey, connected, connecting, disconnect, signMessage } = useWallet()
@@ -19,93 +14,78 @@ export function WalletDetails() {
   const [balance, setBalance] = useState<number | null>(null)
   const [network, setNetwork] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [recent, setRecent] = useState<string[] | null>(null)
   const [authSig, setAuthSig] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [detectedAdapters, setDetectedAdapters] = useState<string[] | null>(null)
-  const [adapterObjects, setAdapterObjects] = useState<any[] | null>(null)
-  const [connectingAdapter, setConnectingAdapter] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
-
-  const getAdapterName = (a: any) => a?.name ?? a?.adapter?.name ?? 'Wallet'
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
+  // Fetch balance and network info
   useEffect(() => {
-    // expose detected adapters for debug (populated by WalletProvider)
-    if (typeof window !== 'undefined') {
-      try {
-        const list = (window as any).__WALLETS
-        if (Array.isArray(list)) {
-          setDetectedAdapters(list.map((a: any) => getAdapterName(a) || 'unnamed'))
-          setAdapterObjects(list)
-        }
-      } catch {}
-    }
     let mounted = true
+
     if (connected && publicKey) {
       setLoading(true)
-      connection.getBalance(publicKey).then((lamports) => {
-        if (!mounted) return
-        setBalance(lamports / 1e9)
-        setLoading(false)
-      }).catch((err) => {
-        if (!mounted) return
-        setError(String(err))
-        setLoading(false)
-      })
+      setError(null)
 
-      // recent signatures
-      connection.getSignaturesForAddress(publicKey, { limit: 6 }).then((sigs) => {
-        if (!mounted) return
-        setRecent(sigs.map((s) => s.signature))
-      }).catch(() => {
-        if (!mounted) return
-        setRecent(null)
-      })
+      connection.getBalance(publicKey)
+        .then((lamports) => {
+          if (mounted) {
+            setBalance(lamports / 1e9)
+            setLoading(false)
+          }
+        })
+        .catch((err) => {
+          if (mounted) {
+            console.error('Failed to fetch balance:', err)
+            setError('Failed to fetch balance')
+            setLoading(false)
+          }
+        })
 
-      // detect network name
-      try {
-        const ep = connection.rpcEndpoint
-        if (ep.includes('devnet')) setNetwork('Devnet')
-        else if (ep.includes('mainnet')) setNetwork('Mainnet')
-        else setNetwork('Custom')
-      } catch {
-        setNetwork('Unknown')
-      }
+      // Detect network
+      const ep = connection.rpcEndpoint
+      if (ep.includes('devnet')) setNetwork('Devnet')
+      else if (ep.includes('mainnet')) setNetwork('Mainnet')
+      else setNetwork('Custom')
     } else {
       setBalance(null)
-      setRecent(null)
       setAuthSig(null)
+      setError(null)
     }
+
     return () => { mounted = false }
   }, [connected, publicKey, connection])
 
-  const refresh = async () => {
+  const refreshBalance = useCallback(async () => {
     if (!connected || !publicKey) return
     setLoading(true)
+    setError(null)
     try {
       const lamports = await connection.getBalance(publicKey)
       setBalance(lamports / 1e9)
-    } catch (err: any) {
-      setError(String(err))
+    } catch (err) {
+      setError('Failed to refresh balance')
+      console.error(err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [connected, publicKey, connection])
 
-  const handleSignMessage = async () => {
+  const handleSignMessage = useCallback(async () => {
     setError(null)
     setAuthSig(null)
+
     if (!connected || !publicKey) {
       setError('Wallet not connected')
       return
     }
 
     if (!signMessage) {
-      setError('This wallet does not support `signMessage`.')
+      setError('This wallet does not support signMessage')
       return
     }
 
@@ -113,134 +93,167 @@ export function WalletDetails() {
       const message = `Sign in to Web3 Portfolio — ${Date.now()}`
       const encoded = new TextEncoder().encode(message)
       const signed = await signMessage(encoded)
-      const hex = u8aToHex(signed)
-      setAuthSig(hex)
+      const hex = Array.from(signed).map(b => b.toString(16).padStart(2, '0')).join('')
+      setAuthSig(hex.slice(0, 64) + '...')
     } catch (err: any) {
-      setError(String(err?.message ?? err))
+      setError(err?.message || 'Failed to sign message')
     }
-  }
+  }, [connected, publicKey, signMessage])
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = useCallback(async () => {
     try {
       await disconnect()
-    } catch (err: any) {
-      setError(String(err))
+    } catch (err) {
+      console.error('Failed to disconnect:', err)
     }
-  }
+  }, [disconnect])
 
-  // Fallback: programmatic connect to an adapter object when modal doesn't work
-  const connectAdapterDirect = async (adapter: any) => {
-    if (!adapter) return
-    setError(null)
-    setConnectingAdapter(getAdapterName(adapter))
+  const copyAddress = useCallback(async () => {
+    if (!publicKey) return
     try {
-      // Some adapters expose `connect()` directly
-      if (typeof adapter.connect === 'function') {
-        await adapter.connect()
-        try { localStorage.setItem('selectedWallet', adapter.name) } catch {}
-      } else if (adapter.adapter && typeof adapter.adapter.connect === 'function') {
-        // Some wrappers expose an inner adapter
-        await adapter.adapter.connect()
-        try { localStorage.setItem('selectedWallet', adapter.adapter.name) } catch {}
-      } else {
-        throw new Error('Adapter does not expose connect()')
-      }
-    } catch (err: any) {
-      // Friendly error messages and popup guidance
-      const msg = String(err?.message ?? err)
-      // Provide helpful guidance for known extension/content-script failures
-      if (/solanaActionsContentScript|Something went wrong/i.test(msg)) {
-        setError(msg + ' — Wallet extension internal error. Try restarting the extension or browser, or use a different browser/profile where the wallet is installed.')
-      } else {
-        setError(msg)
-      }
-      // Detect popup/policy issues
-      if (/popup|blocked|user denied|user closed/i.test(msg)) {
-        setError(msg + ' — your browser may be blocking popups or the wallet prompt. Please allow popups for localhost and try again.')
-      }
-      // Also log for debugging
-      // eslint-disable-next-line no-console
-      console.error('[WalletDetails] connectAdapterDirect error', getAdapterName(adapter), err)
-    } finally {
-      setConnectingAdapter(null)
+      await navigator.clipboard.writeText(publicKey.toString())
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
     }
+  }, [publicKey])
+
+  if (!isMounted) {
+    return (
+      <div className="bg-card/60 backdrop-blur-sm border border-border/50 rounded-lg p-4 text-sm text-foreground/90 max-w-md">
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-5 h-5 animate-spin text-accent" />
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="bg-card/60 backdrop-blur-sm border border-border/50 rounded-lg p-4 text-sm text-foreground/90 max-w-md">
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-xs text-foreground/60">Wallet</div>
-        <div className="text-xs text-foreground/60">{connected ? network : 'Disconnected'}</div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Wallet className="w-4 h-4 text-accent" />
+          <span className="font-medium">Wallet</span>
+        </div>
+        <div className="text-xs text-foreground/60">
+          {connected ? (
+            <span className="flex items-center space-x-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full" />
+              <span>{network}</span>
+            </span>
+          ) : (
+            'Disconnected'
+          )}
+        </div>
       </div>
 
+      {/* Not connected state */}
       {!connected && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm">Not connected</div>
-          <button
+        <div className="space-y-3">
+          <p className="text-foreground/70">Connect your wallet to view account details</p>
+          <motion.button
             onClick={() => setVisible(true)}
-            className="px-4 py-2 bg-gradient-to-r from-accent to-accent-dark text-black rounded-md text-sm"
+            disabled={connecting}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-accent to-accent-dark text-black font-semibold rounded-lg disabled:opacity-50"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            Connect
-          </button>
+            {connecting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <>
+                <Wallet className="w-4 h-4" />
+                <span>Connect Wallet</span>
+              </>
+            )}
+          </motion.button>
         </div>
       )}
 
-      {/* Custom in-app wallet list + fallback connect */}
-      {!connected && adapterObjects && adapterObjects.length > 0 && (
-        <div className="mt-3">
-          <div className="text-xs text-foreground/60 mb-2">Available wallets (fallback connect)</div>
-          <div className="flex flex-wrap gap-2">
-            {adapterObjects.map((a: any, i: number) => (
-              <button
-                key={i}
-                onClick={() => connectAdapterDirect(a)}
-                disabled={!!connectingAdapter}
-                className="px-3 py-1 bg-accent/10 text-accent rounded-md text-xs border border-accent/20"
-              >
-                {connectingAdapter === (a.name ?? a.adapter?.name) ? 'Connecting…' : (a.name ?? a.adapter?.name ?? 'Wallet')}
-              </button>
-            ))}
-          </div>
-          <div className="text-xs text-foreground/60 mt-2">If selecting a wallet doesn't prompt, try using the buttons above or allow popups for this site.</div>
-        </div>
-      )}
-
+      {/* Connected state */}
       {connected && publicKey && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="font-mono text-sm">{publicKey.toString()}</div>
-            <div className="text-xs text-foreground/60">{loading ? '...' : `${balance ?? '—'} SOL`}</div>
+        <div className="space-y-4">
+          {/* Address */}
+          <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+            <div className="flex flex-col">
+              <span className="text-xs text-foreground/60 mb-1">Address</span>
+              <span className="font-mono text-sm">
+                {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
+              </span>
+            </div>
+            <button
+              onClick={copyAddress}
+              className="p-2 hover:bg-accent/10 rounded-lg transition-colors"
+              title="Copy address"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Copy className="w-4 h-4 text-foreground/60" />
+              )}
+            </button>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <button onClick={refresh} className="px-3 py-1 bg-accent/20 text-accent rounded-md text-xs">Refresh</button>
-            <button onClick={handleSignMessage} className="px-3 py-1 bg-accent/10 text-accent rounded-md text-xs border border-accent/30">Sign Message</button>
-            <button onClick={handleDisconnect} className="ml-auto px-3 py-1 bg-red-600/10 text-red-400 rounded-md text-xs">Disconnect</button>
+          {/* Balance */}
+          <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+            <div className="flex flex-col">
+              <span className="text-xs text-foreground/60 mb-1">Balance</span>
+              <span className="font-semibold text-lg">
+                {loading ? '...' : balance !== null ? `${balance.toFixed(4)} SOL` : '—'}
+              </span>
+            </div>
+            <button
+              onClick={refreshBalance}
+              disabled={loading}
+              className="p-2 hover:bg-accent/10 rounded-lg transition-colors disabled:opacity-50"
+              title="Refresh balance"
+            >
+              <RefreshCw className={`w-4 h-4 text-foreground/60 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
 
-          <div className="pt-2">
-            <div className="text-xs text-foreground/60">Recent Signatures</div>
-            <div className="mt-1 text-xs font-mono break-words">{recent ? recent.join(', ') : '—'}</div>
+          {/* Wallet name */}
+          <div className="text-xs text-foreground/60">
+            Connected via <span className="text-accent">{wallet?.adapter?.name || 'Unknown'}</span>
           </div>
 
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSignMessage}
+              className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-accent/10 text-accent rounded-lg text-sm border border-accent/20 hover:bg-accent/20 transition-colors"
+            >
+              <PenLine className="w-4 h-4" />
+              <span>Sign Message</span>
+            </button>
+            <button
+              onClick={handleDisconnect}
+              className="flex items-center justify-center space-x-2 px-3 py-2 bg-red-600/10 text-red-400 rounded-lg text-sm hover:bg-red-600/20 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Disconnect</span>
+            </button>
+          </div>
+
+          {/* Signed message */}
           {authSig && (
-            <div className="pt-2">
-              <div className="text-xs text-foreground/60">Signed Message (hex)</div>
-              <div className="mt-1 text-xs font-mono break-words">{authSig}</div>
+            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <div className="text-xs text-green-400 mb-1">Signed Message</div>
+              <div className="text-xs font-mono text-foreground/80 break-all">{authSig}</div>
             </div>
           )}
 
+          {/* Error */}
           {error && (
-            <div className="pt-2 text-xs text-rose-400">{error}</div>
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div className="text-xs text-red-400">{error}</div>
+            </div>
           )}
-        </div>
-      )}
-
-      {/* Debug info: show detected adapters and selected wallet name (dev only) */}
-      {isMounted && (
-        <div className="mt-3 text-xs text-foreground/60">
-          <div>Detected adapters: {detectedAdapters ? detectedAdapters.join(', ') : 'None'}</div>
-          <div>Selected wallet: {wallet?.adapter?.name ?? '—'}</div>
         </div>
       )}
     </div>

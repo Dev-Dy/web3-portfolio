@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface LoadingScreenProps {
   onComplete: () => void
@@ -10,10 +10,14 @@ interface LoadingScreenProps {
 export function LoadingScreen({ onComplete }: LoadingScreenProps) {
   const [progress, setProgress] = useState(0)
   const [showContent, setShowContent] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const onCompleteRef = useRef(onComplete)
+  
+  // Keep ref updated
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   useEffect(() => {
-    setIsMounted(true)
     // Show content after a brief delay
     const contentTimer = setTimeout(() => setShowContent(true), 200)
     
@@ -22,12 +26,13 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(progressInterval)
+          // Call onComplete after a short delay
           setTimeout(() => {
-            onComplete()
+            onCompleteRef.current()
           }, 500)
           return 100
         }
-        return prev + Math.random() * 15
+        return Math.min(prev + Math.random() * 15, 100)
       })
     }, 100)
 
@@ -35,7 +40,7 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
       clearTimeout(contentTimer)
       clearInterval(progressInterval)
     }
-  }, [onComplete])
+  }, []) // Empty deps - only run once
 
   return (
     <AnimatePresence>
@@ -163,44 +168,7 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
             {progress >= 90 && 'Almost ready...'}
           </motion.p>
         </div>
-
-        {/* Floating particles - only render on client to avoid hydration mismatch */}
-        {isMounted && typeof window !== 'undefined' && [...Array(20)].map((_, i) => {
-          const width = window.innerWidth || 1920
-          const height = window.innerHeight || 1080
-          // Use seeded random based on index to ensure consistent values
-          const seed = i * 0.05
-          const randomX = (Math.sin(seed) * 10000) % 1
-          const randomY = (Math.cos(seed) * 10000) % 1
-          const randomAnimY = (Math.sin(seed * 2) * 10000) % 1
-          const randomDuration = (Math.cos(seed * 3) * 10000) % 1
-          const randomDelay = (Math.sin(seed * 4) * 10000) % 1
-          
-          return (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-accent/30 rounded-full"
-              initial={{
-                x: Math.abs(randomX) * width,
-                y: Math.abs(randomY) * height,
-                opacity: 0,
-              }}
-              animate={{
-                y: [null, Math.abs(randomAnimY) * height],
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
-              }}
-              transition={{
-                duration: Math.abs(randomDuration) * 3 + 2,
-                repeat: Infinity,
-                delay: Math.abs(randomDelay) * 2,
-                ease: 'easeInOut',
-              }}
-            />
-          )
-        })}
       </motion.div>
     </AnimatePresence>
   )
 }
-
