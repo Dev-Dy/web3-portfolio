@@ -22,17 +22,38 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // Create wallets using useState with lazy initializer to ensure they're created on client only
   // This prevents SSR from caching an empty array and ensures wallets are available immediately on client
-  // Note: Phantom is auto-detected via Wallet Standard, but we keep manual registration for compatibility
-  // and to ensure it works in all browsers. The warning can be safely ignored.
+  // Register common wallets explicitly to ensure they appear in the modal
+  // Wallet Standard will auto-detect additional wallets, but explicit registration ensures compatibility
   const [wallets] = useState(() => {
     if (typeof window === 'undefined') return []
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { PhantomWalletAdapter } = require('@solana/wallet-adapter-wallets')
-      return [new PhantomWalletAdapter()]
+      const {
+        PhantomWalletAdapter,
+        SolflareWalletAdapter,
+        TorusWalletAdapter,
+        LedgerWalletAdapter,
+      } = require('@solana/wallet-adapter-wallets')
+      
+      const walletAdapters = [
+        new PhantomWalletAdapter(),
+        new SolflareWalletAdapter(),
+        new TorusWalletAdapter(),
+        new LedgerWalletAdapter(),
+      ]
+      
+      return walletAdapters
     } catch (e) {
       console.error('Failed to create wallet adapters', e)
-      return []
+      // Fallback to just Phantom if other adapters fail
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { PhantomWalletAdapter } = require('@solana/wallet-adapter-wallets')
+        return [new PhantomWalletAdapter()]
+      } catch (fallbackError) {
+        console.error('Failed to create Phantom wallet adapter', fallbackError)
+        return []
+      }
     }
   })
 
