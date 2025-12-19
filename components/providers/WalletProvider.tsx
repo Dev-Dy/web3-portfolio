@@ -4,7 +4,7 @@ import { useMemo, useCallback } from 'react'
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
+import { SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
 import { clusterApiUrl } from '@solana/web3.js'
 
 // Import wallet adapter CSS - this provides the modal styling
@@ -18,10 +18,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const endpoint = useMemo(() => clusterApiUrl(network), [network])
 
   // Create wallet adapters - these are the wallets that will appear in the modal
-  // Other wallets that support Wallet Standard will be auto-detected
+  // Note: Phantom is auto-detected via Wallet Standard, so we don't need to manually register it
+  // Other wallets that support Wallet Standard will also be auto-detected
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter(),
+      // Only register wallets that don't support Wallet Standard
+      // Phantom is auto-detected, so we can remove it to avoid the warning
       new SolflareWalletAdapter(),
     ],
     []
@@ -29,13 +31,34 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // Error handler for wallet operations
   const onError = useCallback((error: Error) => {
-    console.error('[WalletProvider Error]', error)
-    // Log more details for debugging
-    if (error.message) {
-      console.error('[WalletProvider Error Message]', error.message)
+    const errorMessage = error?.message || String(error)
+    const errorName = (error as any)?.name || 'Unknown'
+    const errorStack = error?.stack || ''
+    
+    // Check if this is a wallet extension content script error (non-critical)
+    // These errors come from wallet extensions themselves and are not actionable
+    const isContentScriptError = 
+      errorMessage.includes('solanaActionsContentScript') ||
+      errorMessage.includes('Something went wrong') ||
+      errorStack.includes('solanaActionsContentScript') ||
+      errorName.includes('ContentScript')
+    
+    if (isContentScriptError) {
+      // Silently ignore wallet extension content script errors
+      // These are internal to wallet extensions and don't affect functionality
+      return
     }
-    if ((error as any).name) {
-      console.error('[WalletProvider Error Name]', (error as any).name)
+    
+    // Log actual errors for debugging
+    console.error('[WalletProvider Error]', error)
+    if (errorMessage) {
+      console.error('[WalletProvider Error Message]', errorMessage)
+    }
+    if (errorName) {
+      console.error('[WalletProvider Error Name]', errorName)
+    }
+    if (errorStack) {
+      console.error('[WalletProvider Error Stack]', errorStack)
     }
   }, [])
 

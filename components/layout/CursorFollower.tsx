@@ -78,16 +78,44 @@ export function CursorFollower() {
       // Store ref value to prevent race condition if ref is cleared during execution
       const currentElement = currentInteractiveElementRef.current
       
-      // If we're leaving an interactive element and not entering another interactive element
-      if (currentElement) {
-        const leavingInteractive = currentElement.contains(target) || target === currentElement
-        const enteringInteractive = relatedTarget && isInteractiveElement(relatedTarget)
+      if (!currentElement) return
+      
+      // Check if the target being left is part of the current interactive element's subtree
+      const targetIsInCurrentSubtree = currentElement === target || currentElement.contains(target)
+      
+      // Only proceed if we're actually leaving the current interactive element's subtree
+      if (!targetIsInCurrentSubtree) return
+      
+      // Check if we're entering another element that's still within the interactive subtree
+      // If relatedTarget is null, we're leaving the document (should deactivate)
+      if (relatedTarget) {
+        // Check if the element we're entering is still within the current interactive element
+        const enteringStillInSubtree = currentElement === relatedTarget || currentElement.contains(relatedTarget)
         
-        if (leavingInteractive && !enteringInteractive) {
-          setIsHovering(false)
-          currentInteractiveElementRef.current = null
+        // If we're entering an element that's still in the subtree, don't deactivate
+        if (enteringStillInSubtree) return
+        
+        // Check if we're entering a different interactive element
+        const enteringDifferentInteractive = isInteractiveElement(relatedTarget)
+        
+        // If entering a different interactive element, update the tracked element but keep hovering
+        if (enteringDifferentInteractive) {
+          // Find the actual interactive element (could be relatedTarget or a parent)
+          let newInteractiveElement: HTMLElement | null = relatedTarget
+          while (newInteractiveElement && !isInteractiveElement(newInteractiveElement)) {
+            newInteractiveElement = newInteractiveElement.parentElement
+          }
+          if (newInteractiveElement) {
+            currentInteractiveElementRef.current = newInteractiveElement
+            setIsHovering(true)
+          }
+          return
         }
       }
+      
+      // We're truly leaving the interactive element - deactivate
+      setIsHovering(false)
+      currentInteractiveElementRef.current = null
     }
 
     window.addEventListener('mousemove', handleMouseMove)

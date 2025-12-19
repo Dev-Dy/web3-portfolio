@@ -62,7 +62,8 @@ export function WalletButton() {
       setVisible(true)
     } catch (error) {
       console.error('[WalletButton] Failed to open wallet modal:', error)
-      setConnectionError('Failed to open wallet selection. Please ensure your wallet extension is installed.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setConnectionError(`Failed to open wallet selection: ${errorMessage}. Please ensure your wallet extension is installed and try again.`)
     }
   }, [setVisible])
 
