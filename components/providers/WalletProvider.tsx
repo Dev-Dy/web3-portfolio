@@ -29,14 +29,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // Error handler for wallet operations
   const onError = useCallback((error: Error) => {
-    console.error('[Wallet Error]', error.message)
+    console.error('[WalletProvider Error]', error)
+    // Log more details for debugging
+    if (error.message) {
+      console.error('[WalletProvider Error Message]', error.message)
+    }
+    if ((error as any).name) {
+      console.error('[WalletProvider Error Name]', (error as any).name)
+    }
   }, [])
 
   return (
     <ConnectionProvider endpoint={endpoint}>
       <SolanaWalletProvider 
         wallets={wallets} 
-        autoConnect={true}
+        autoConnect={false}
         onError={onError}
       >
         <WalletModalProvider>

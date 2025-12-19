@@ -9,13 +9,14 @@ import { motion } from 'framer-motion'
 import { Wallet, LogOut, Loader2 } from 'lucide-react'
 
 export function WalletButton() {
-  const { wallet, publicKey, disconnect, connected, connecting, select, wallets } = useWallet()
-  const { visible, setVisible } = useWalletModal()
+  const { wallet, publicKey, disconnect, connected, connecting } = useWallet()
+  const { setVisible } = useWalletModal()
   const { connection } = useConnection()
   const [balance, setBalance] = useState<number | null>(null)
   const [network, setNetwork] = useState<string>('')
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [connectionError, setConnectionError] = useState<string | null>(null)
 
   // Ensure client-side only
   useEffect(() => {
@@ -54,9 +55,30 @@ export function WalletButton() {
   }, [connected, publicKey, connection])
 
   const handleConnect = useCallback(() => {
-    // Open the wallet modal
-    setVisible(true)
+    setConnectionError(null)
+    try {
+      // Open the wallet modal
+      console.log('[WalletButton] Opening wallet modal...')
+      setVisible(true)
+    } catch (error) {
+      console.error('[WalletButton] Failed to open wallet modal:', error)
+      setConnectionError('Failed to open wallet selection. Please ensure your wallet extension is installed.')
+    }
   }, [setVisible])
+
+  // Add timeout for connecting state to prevent infinite loading
+  useEffect(() => {
+    if (connecting) {
+      const timeout = setTimeout(() => {
+        console.warn('[WalletButton] Connection timeout - taking longer than 30 seconds')
+        setConnectionError('Connection is taking longer than expected. Please try again or check your wallet extension.')
+      }, 30000) // 30 second timeout
+
+      return () => clearTimeout(timeout)
+    } else {
+      setConnectionError(null)
+    }
+  }, [connecting])
 
   const handleDisconnect = useCallback(async () => {
     setIsDisconnecting(true)
@@ -131,28 +153,38 @@ export function WalletButton() {
   // Connecting state
   if (connecting) {
     return (
-      <motion.button
-        disabled
-        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent/50 to-accent-dark/50 text-black/70 font-semibold rounded-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span>Connecting...</span>
-      </motion.button>
+      <div className="flex flex-col items-end space-y-2">
+        <motion.button
+          disabled
+          className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent/50 to-accent-dark/50 text-black/70 font-semibold rounded-lg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Connecting...</span>
+        </motion.button>
+        {connectionError && (
+          <p className="text-xs text-red-400 max-w-xs text-right">{connectionError}</p>
+        )}
+      </div>
     )
   }
 
   // Disconnected state - show connect button
   return (
-    <motion.button
-      onClick={handleConnect}
-      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent to-accent-dark hover:from-accent-light hover:to-accent text-black font-semibold rounded-lg transition-all duration-300 shadow-glow hover:shadow-glow-lg"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <Wallet className="w-5 h-5" />
-      <span>Connect Wallet</span>
-    </motion.button>
+    <div className="flex flex-col items-end space-y-2">
+      <motion.button
+        onClick={handleConnect}
+        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent to-accent-dark hover:from-accent-light hover:to-accent text-black font-semibold rounded-lg transition-all duration-300 shadow-glow hover:shadow-glow-lg"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Wallet className="w-5 h-5" />
+        <span>Connect Wallet</span>
+      </motion.button>
+      {connectionError && (
+        <p className="text-xs text-red-400 max-w-xs text-right">{connectionError}</p>
+      )}
+    </div>
   )
 }
