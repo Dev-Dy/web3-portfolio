@@ -95,7 +95,7 @@ Portfolio-web3/
 ### Colors
 - Background: `#0A0A0A` (near black)
 - Foreground: `#E5E5E5` (light gray)
-- Accent: `#00D9FF` (cyan)
+- Accent: CSS variable `--accent` (defaults to `#00D9FF` / cyan)
 - Card: `#1A1A1A` (dark gray)
 - Border: `#2A2A2A` (medium gray)
 

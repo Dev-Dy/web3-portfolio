@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { WalletButton } from '@/components/wallet/WalletButton'
+import { WalletDetails } from '@/components/wallet/WalletDetails'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useEffect, useRef } from 'react'
 
@@ -37,7 +37,7 @@ export function Hero() {
       className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
     >
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-[#0F0F0F]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-[var(--background-dark)]" />
       
       {/* Radial gradient overlay with parallax */}
       <motion.div 
@@ -222,12 +222,9 @@ export function Hero() {
               }}
               className="flex flex-wrap items-center gap-4 pt-4"
             >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <WalletButton />
-              </motion.div>
+              <div>
+                <WalletDetails />
+              </div>
               {connected && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -272,7 +269,7 @@ export function Hero() {
               <motion.div
                 className="absolute inset-0 rounded-2xl"
                 style={{
-                  background: 'linear-gradient(45deg, transparent, rgba(0, 217, 255, 0.1), transparent)',
+                  background: 'linear-gradient(45deg, transparent, rgba(var(--accent-rgb), 0.1), transparent)',
                   backgroundSize: '200% 200%',
                 }}
                 animate={{
@@ -338,17 +335,17 @@ function ArchitectureDiagram() {
             stiffness: 100,
             damping: 15,
           }}
-          whileHover={{ 
-            x: 10,
-            scale: 1.02,
-            transition: { duration: 0.2 },
-          }}
-          className="relative group"
+            whileHover={{ 
+              x: 10,
+              scale: 1.02,
+              transition: { duration: 0.2 },
+            }}
+            className="relative group"
         >
           <motion.div
             className={`bg-gradient-to-r ${layer.color} border border-border/50 rounded-xl p-4 backdrop-blur-sm transition-all duration-300 group-hover:border-accent/50 group-hover:shadow-glow`}
             whileHover={{
-              boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)',
+              boxShadow: '0 0 20px rgba(var(--accent-rgb), 0.3)',
             }}
           >
             <div className="flex items-center space-x-3">
