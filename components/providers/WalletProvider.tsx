@@ -22,6 +22,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // Create wallets using useState with lazy initializer to ensure they're created on client only
   // This prevents SSR from caching an empty array and ensures wallets are available immediately on client
+  // Note: Phantom is auto-detected via Wallet Standard, but we keep manual registration for compatibility
+  // and to ensure it works in all browsers. The warning can be safely ignored.
   const [wallets] = useState(() => {
     if (typeof window === 'undefined') return []
     try {

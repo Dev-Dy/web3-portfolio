@@ -1,27 +1,25 @@
 'use client'
 
-import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionValueEvent } from 'framer-motion'
+import { motion, useMotionValue, useSpring, useTransform, useScroll } from 'framer-motion'
 import { WalletDetails } from '@/components/wallet/WalletDetails'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useEffect, useRef, useState } from 'react'
-import { Code2, Zap, Sparkles, ArrowRight } from 'lucide-react'
 
 export function Hero() {
   const { connected } = useWallet()
   const ref = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [isHoveringCard, setIsHoveringCard] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
   // Scroll-based animations - use stable ref to prevent mid-lifecycle target changes
   // useScroll handles cases where ref isn't attached yet gracefully
+  // Container has 'relative' positioning to satisfy useScroll requirements
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end start'],
-    layoutEffect: false
+    layoutEffect: false,
+    // Suppress warning about container position - we ensure relative positioning via className
   })
 
   const springConfig = { damping: 25, stiffness: 200 }
@@ -31,7 +29,6 @@ export function Hero() {
   // Parallax transforms - safe defaults (will be 0 until mounted)
   const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '50%'], { clamp: false })
   const textY = useTransform(scrollYProgress, [0, 1], ['0%', '30%'], { clamp: false })
-  const cardY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'], { clamp: false })
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -48,7 +45,6 @@ export function Hero() {
       const mouseYRelative = (e.clientY - rect.top) / height - 0.5
       mouseX.set(mouseXRelative)
       mouseY.set(mouseYRelative)
-      setMousePosition({ x: e.clientX, y: e.clientY })
     }
 
     window.addEventListener('mousemove', handleMouseMove)
@@ -59,6 +55,7 @@ export function Hero() {
     <section 
       ref={ref}
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      style={{ position: 'relative' }}
     >
       {/* Subtle interactive background */}
       <motion.div 
@@ -142,7 +139,6 @@ export function Hero() {
         })}
 
       <motion.div 
-        ref={containerRef}
         className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24"
         style={{ y: textY }}
       >
