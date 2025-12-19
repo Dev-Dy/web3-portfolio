@@ -115,7 +115,7 @@ export const projects: Project[] = [
     links: {
       github: 'https://github.com/dev-dy/nft-marketplace',
     },
-    status: 'completed',
+    status: 'active',
   },
   {
     id: 'token-staking',

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Github, Twitter, Mail } from 'lucide-react'
+import { Github, Linkedin, Mail } from 'lucide-react'
 import { Web3Logo } from './Web3Logo'
 
 export function Footer() {
@@ -41,13 +41,13 @@ export function Footer() {
                 <Github className="w-5 h-5 text-foreground/60 hover:text-foreground" />
               </a>
               <a
-                href="https://twitter.com"
+                href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 hover:bg-card rounded-lg transition-colors"
-                title="Twitter"
+                title="LinkedIn"
               >
-                <Twitter className="w-5 h-5 text-foreground/60 hover:text-foreground" />
+                <Linkedin className="w-5 h-5 text-foreground/60 hover:text-foreground" />
               </a>
               <a
                 href="mailto:your.email@example.com"

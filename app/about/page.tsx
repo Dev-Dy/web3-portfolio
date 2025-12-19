@@ -66,7 +66,7 @@ export default function AboutPage() {
           </p>
           <p className="text-lg text-foreground/70 leading-relaxed">
             I approach Web3 development with a systems-thinking mindset, ensuring that every
-            component—from smart contracts to frontend interfaces—is designed for scalability,
+            component from smart contracts to frontend interfaces is designed for scalability,
             maintainability, and production readiness. Each project is an opportunity to explore
             new patterns, solve complex problems, and contribute to the decentralized future.
           </p>
