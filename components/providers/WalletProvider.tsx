@@ -19,11 +19,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // Create wallet adapters - these are the wallets that will appear in the modal
   // Note: Phantom is auto-detected via Wallet Standard, so we don't need to manually register it
+  // The warning "Phantom was registered as a Standard Wallet" is expected and can be safely ignored
+  // It's just informational - Phantom will still work correctly via Wallet Standard auto-detection
   // Other wallets that support Wallet Standard will also be auto-detected
   const wallets = useMemo(
     () => [
       // Only register wallets that don't support Wallet Standard
-      // Phantom is auto-detected, so we can remove it to avoid the warning
+      // Phantom is auto-detected, so we don't register it to avoid the warning
       new SolflareWalletAdapter(),
     ],
     []

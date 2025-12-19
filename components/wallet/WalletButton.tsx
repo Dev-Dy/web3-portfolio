@@ -58,7 +58,9 @@ export function WalletButton() {
     setConnectionError(null)
     try {
       // Open the wallet modal
-      console.log('[WalletButton] Opening wallet modal...')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletButton] Opening wallet modal...')
+      }
       setVisible(true)
     } catch (error) {
       console.error('[WalletButton] Failed to open wallet modal:', error)
