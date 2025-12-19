@@ -27,9 +27,9 @@ export default function RootLayout({
       <body>
         <WalletProvider>
           <ClientLayout>
-            <div className="min-h-screen flex flex-col bg-background">
+            <div className="min-h-screen flex flex-col bg-background w-full">
               <PremiumNavbar />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 w-full">{children}</main>
               <Footer />
             </div>
           </ClientLayout>

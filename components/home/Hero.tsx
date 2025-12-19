@@ -54,7 +54,7 @@ export function Hero() {
   return (
     <section 
       ref={ref}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
       style={{ position: 'relative' }}
     >
       {/* Subtle interactive background */}
@@ -139,7 +139,7 @@ export function Hero() {
         })}
 
       <motion.div 
-        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24"
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20"
         style={{ y: textY }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">

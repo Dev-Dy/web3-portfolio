@@ -20,7 +20,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
       <Link
         href="/projects"
         className="inline-flex items-center space-x-2 text-foreground/70 hover:text-foreground mb-8 transition-colors"
