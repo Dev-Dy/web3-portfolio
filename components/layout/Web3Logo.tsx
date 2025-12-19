@@ -29,7 +29,7 @@ export function Web3Logo({ className = '', size = 'md' }: Web3LogoProps) {
       <motion.div
         className="absolute inset-0 rounded-full"
         style={{
-          background: 'conic-gradient(from 0deg, transparent, rgba(var(--accent-rgb), 0.3), transparent)',
+          background: 'conic-gradient(from 0deg, transparent, rgba(0, 217, 255, 0.3), transparent)',
         }}
         animate={{
           rotate: isHovered ? 360 : 0,

@@ -25,8 +25,13 @@ export function WalletDetails() {
   const [detectedAdapters, setDetectedAdapters] = useState<string[] | null>(null)
   const [adapterObjects, setAdapterObjects] = useState<any[] | null>(null)
   const [connectingAdapter, setConnectingAdapter] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
 
   const getAdapterName = (a: any) => a?.name ?? a?.adapter?.name ?? 'Wallet'
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     // expose detected adapters for debug (populated by WalletProvider)
@@ -209,7 +214,7 @@ export function WalletDetails() {
 
           <div className="flex items-center space-x-2">
             <button onClick={refresh} className="px-3 py-1 bg-accent/20 text-accent rounded-md text-xs">Refresh</button>
-            <button onClick={handleSignMessage} className="px-3 py-1 bg-cta/0 text-cta rounded-md text-xs border border-cta/30">Sign Message</button>
+            <button onClick={handleSignMessage} className="px-3 py-1 bg-accent/10 text-accent rounded-md text-xs border border-accent/30">Sign Message</button>
             <button onClick={handleDisconnect} className="ml-auto px-3 py-1 bg-red-600/10 text-red-400 rounded-md text-xs">Disconnect</button>
           </div>
 
@@ -232,10 +237,12 @@ export function WalletDetails() {
       )}
 
       {/* Debug info: show detected adapters and selected wallet name (dev only) */}
-      <div className="mt-3 text-xs text-foreground/60">
-        <div>Detected adapters: {detectedAdapters ? detectedAdapters.join(', ') : 'None'}</div>
-        <div>Selected wallet: {wallet?.adapter?.name ?? '—'}</div>
-      </div>
+      {isMounted && (
+        <div className="mt-3 text-xs text-foreground/60">
+          <div>Detected adapters: {detectedAdapters ? detectedAdapters.join(', ') : 'None'}</div>
+          <div>Selected wallet: {wallet?.adapter?.name ?? '—'}</div>
+        </div>
+      )}
     </div>
   )
 }

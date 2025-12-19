@@ -10,8 +10,10 @@ interface LoadingScreenProps {
 export function LoadingScreen({ onComplete }: LoadingScreenProps) {
   const [progress, setProgress] = useState(0)
   const [showContent, setShowContent] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
+    setIsMounted(true)
     // Show content after a brief delay
     const contentTimer = setTimeout(() => setShowContent(true), 200)
     
@@ -162,29 +164,41 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
           </motion.p>
         </div>
 
-        {/* Floating particles */}
-        {typeof window !== 'undefined' && [...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-accent/30 rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              opacity: 0,
-            }}
-            animate={{
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [0, 1, 0],
-              scale: [0, 1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: 'easeInOut',
-            }}
-          />
-        ))}
+        {/* Floating particles - only render on client to avoid hydration mismatch */}
+        {isMounted && typeof window !== 'undefined' && [...Array(20)].map((_, i) => {
+          const width = window.innerWidth || 1920
+          const height = window.innerHeight || 1080
+          // Use seeded random based on index to ensure consistent values
+          const seed = i * 0.05
+          const randomX = (Math.sin(seed) * 10000) % 1
+          const randomY = (Math.cos(seed) * 10000) % 1
+          const randomAnimY = (Math.sin(seed * 2) * 10000) % 1
+          const randomDuration = (Math.cos(seed * 3) * 10000) % 1
+          const randomDelay = (Math.sin(seed * 4) * 10000) % 1
+          
+          return (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-accent/30 rounded-full"
+              initial={{
+                x: Math.abs(randomX) * width,
+                y: Math.abs(randomY) * height,
+                opacity: 0,
+              }}
+              animate={{
+                y: [null, Math.abs(randomAnimY) * height],
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+              }}
+              transition={{
+                duration: Math.abs(randomDuration) * 3 + 2,
+                repeat: Infinity,
+                delay: Math.abs(randomDelay) * 2,
+                ease: 'easeInOut',
+              }}
+            />
+          )
+        })}
       </motion.div>
     </AnimatePresence>
   )

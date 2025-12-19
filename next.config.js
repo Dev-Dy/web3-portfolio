@@ -13,7 +13,8 @@ const nextConfig = {
   
   // Disable experimental features in dev for faster compilation
   experimental: {
-    optimizeCss: process.env.NODE_ENV === 'production',
+    // optimizeCss requires critters package - disabled to avoid build errors
+    // optimizeCss: process.env.NODE_ENV === 'production',
   },
   
   // Faster TypeScript checking in dev
@@ -97,6 +98,12 @@ const nextConfig = {
         removeAvailableModules: false,
         removeEmptyChunks: false,
         splitChunks: false, // Disable code splitting in dev for faster compilation
+      }
+      
+      // Better error handling for chunk loading in dev
+      config.output = {
+        ...config.output,
+        chunkLoadTimeout: 20000,
       }
     }
 

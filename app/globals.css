@@ -3,8 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --background: #131313;
-  --foreground: #F5F5F5;
+  --background: #0a0a0f;
+  --foreground: #f8f9fa;
+  --background-dark: #050508;
+  --background-light: #141420;
+  --accent-rgb: 139, 92, 246;
+  --accent-secondary-rgb: 0, 217, 255;
+  --purple: #8b5cf6;
+  --purple-light: #a78bfa;
+  --purple-dark: #6d28d9;
+  --cyan: #00d9ff;
+  --cyan-light: #33e0ff;
+  --cyan-dark: #0099cc;
 }
 
 * {
@@ -32,22 +42,24 @@ a {
   text-decoration: none;
 }
 
-/* Custom scrollbar */
+/* Premium custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #2b2a2a;
+  background: #0f0f18;
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2A2A2A;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #8b5cf6 0%, #00d9ff 100%);
+  border-radius: 5px;
+  border: 2px solid #0f0f18;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3A3A;
+  background: linear-gradient(180deg, #a78bfa 0%, #33e0ff 100%);
 }
 
 /* Glass morphism effect */
@@ -58,21 +70,28 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Gradient text */
+/* Gradient text - Premium Web3 gradient */
 .gradient-text {
-  background: linear-gradient(135deg, #00D9FF 0%, #00B8D9 50%, #0099CC 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 25%, #00d9ff 50%, #33e0ff 75%, #8b5cf6 100%);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradient-shift 3s ease infinite;
 }
 
-/* Glow effect */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Glow effect - Premium Web3 glow */
 .glow {
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(0, 217, 255, 0.2);
 }
 
 .glow-hover:hover {
-  box-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.5), 0 0 60px rgba(0, 217, 255, 0.3);
   transition: box-shadow 0.3s ease;
 }
 
@@ -83,7 +102,9 @@ a {
 
 .card-hover:hover {
   transform: translateY(-4px);
-  border-color: rgba(0, 217, 255, 0.5);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 217, 255, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+              0 0 30px rgba(139, 92, 246, 0.2),
+              0 0 60px rgba(0, 217, 255, 0.1);
 }
 

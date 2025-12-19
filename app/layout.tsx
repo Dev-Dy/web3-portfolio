@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { WalletProvider } from '@/components/providers/WalletProvider'
-import { Navigation } from '@/components/layout/Navigation'
+import { PremiumNavbar } from '@/components/layout/PremiumNavbar'
 import { Footer } from '@/components/layout/Footer'
 import { ClientLayout } from '@/components/layout/ClientLayout'
 
@@ -28,7 +28,7 @@ export default function RootLayout({
         <WalletProvider>
           <ClientLayout>
             <div className="min-h-screen flex flex-col bg-background">
-              <Navigation />
+              <PremiumNavbar />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
