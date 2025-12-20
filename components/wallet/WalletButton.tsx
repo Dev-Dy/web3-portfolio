@@ -12,12 +12,6 @@ export function WalletButton() {
   const { wallet, publicKey, disconnect, connected, connecting } = useWallet()
   const { setVisible } = useWalletModal()
   const { connection } = useConnection()
-  
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:12',message:'WalletButton render',data:{connected,connecting,hasPublicKey:!!publicKey,walletName:wallet?.adapter?.name,hasSetVisible:typeof setVisible === 'function'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{})
-  }, [connected, connecting, publicKey, wallet, setVisible])
-  // #endregion
   const [balance, setBalance] = useState<number | null>(null)
   const [network, setNetwork] = useState<string>('')
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -34,20 +28,11 @@ export function WalletButton() {
     let mounted = true
     
     if (connected && publicKey) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:30',message:'Fetching balance',data:{publicKey:publicKey.toString(),endpoint:connection.rpcEndpoint},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{})
-      // #endregion
       connection.getBalance(publicKey)
         .then((lamports) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:33',message:'Balance fetched successfully',data:{lamports,balance:lamports / LAMPORTS_PER_SOL},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{})
-          // #endregion
           if (mounted) setBalance(lamports / LAMPORTS_PER_SOL)
         })
         .catch((err) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:35',message:'Balance fetch failed',data:{error:String(err),errorMessage:err?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{})
-          // #endregion
           console.error('Failed to fetch balance:', err)
           if (mounted) setBalance(null)
         })
@@ -70,30 +55,14 @@ export function WalletButton() {
   }, [connected, publicKey, connection])
 
   const handleConnect = useCallback(() => {
-    // #region agent log
-    const logData = {setVisibleType:typeof setVisible,setVisibleExists:!!setVisible}
-    console.log('[WalletButton] handleConnect called', logData)
-    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:57',message:'handleConnect called',data:logData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-    // #endregion
     setConnectionError(null)
     try {
       // Open the wallet modal
-      console.log('[WalletButton] Opening wallet modal...')
-      // #region agent log
-      console.log('[WalletButton] Calling setVisible(true)')
-      fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:64',message:'Calling setVisible(true)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-      // #endregion
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletButton] Opening wallet modal...')
+      }
       setVisible(true)
-      console.log('[WalletButton] setVisible(true) called successfully')
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:65',message:'setVisible(true) completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-      // #endregion
     } catch (error) {
-      // #region agent log
-      const errorData = {error:String(error),errorMessage:error instanceof Error ? error.message : 'Unknown'}
-      console.error('[WalletButton] setVisible error', errorData)
-      fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:66',message:'setVisible error',data:errorData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-      // #endregion
       console.error('[WalletButton] Failed to open wallet modal:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setConnectionError(`Failed to open wallet selection: ${errorMessage}. Please ensure your wallet extension is installed and try again.`)
@@ -102,14 +71,8 @@ export function WalletButton() {
 
   // Add timeout for connecting state to prevent infinite loading
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:73',message:'Connecting state changed',data:{connecting,connected,publicKey:publicKey?.toString()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{})
-    // #endregion
     if (connecting) {
       const timeout = setTimeout(() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:76',message:'Connection timeout triggered',data:{connecting,connected},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{})
-        // #endregion
         console.warn('[WalletButton] Connection timeout - taking longer than 30 seconds')
         setConnectionError('Connection is taking longer than expected. Please try again or check your wallet extension.')
       }, 30000) // 30 second timeout
@@ -118,7 +81,7 @@ export function WalletButton() {
     } else {
       setConnectionError(null)
     }
-  }, [connecting, connected, publicKey])
+  }, [connecting])
 
   const handleDisconnect = useCallback(async () => {
     setIsDisconnecting(true)
@@ -214,12 +177,7 @@ export function WalletButton() {
   return (
     <div className="flex flex-col items-end space-y-2">
       <motion.button
-        onClick={(e) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:button-onClick',message:'Button clicked',data:{eventType:e.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-          // #endregion
-          handleConnect()
-        }}
+        onClick={handleConnect}
         className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent to-accent-dark hover:from-accent-light hover:to-accent text-black font-semibold rounded-lg transition-all duration-300 shadow-glow hover:shadow-glow-lg"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
