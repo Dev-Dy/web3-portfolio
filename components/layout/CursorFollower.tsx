@@ -60,6 +60,12 @@ export function CursorFollower() {
   const trail2Blur = useTransform(trailBlur, (val) => val * 0.75)
   const trail3Blur = useTransform(trailBlur, (val) => val * 1)
   const trail4Blur = useTransform(trailBlur, (val) => val * 1.25)
+  
+  // Filter transforms for each trail dot (must be created outside map to avoid hook order issues)
+  const trail1Filter = useTransform(trail1Blur, (val) => `blur(${val}px)`)
+  const trail2Filter = useTransform(trail2Blur, (val) => `blur(${val}px)`)
+  const trail3Filter = useTransform(trail3Blur, (val) => `blur(${val}px)`)
+  const trail4Filter = useTransform(trail4Blur, (val) => `blur(${val}px)`)
 
   useEffect(() => {
     setIsMounted(true)
@@ -345,10 +351,10 @@ export function CursorFollower() {
 
       {/* Enhanced trail dots with fade gradient and size variation */}
       {[
-        { x: trail1X, y: trail1Y, blur: trail1Blur, size: 2, opacity: 0.8 },
-        { x: trail2X, y: trail2Y, blur: trail2Blur, size: 1.5, opacity: 0.6 },
-        { x: trail3X, y: trail3Y, blur: trail3Blur, size: 1.25, opacity: 0.4 },
-        { x: trail4X, y: trail4Y, blur: trail4Blur, size: 1, opacity: 0.2 },
+        { x: trail1X, y: trail1Y, filter: trail1Filter, size: 2, opacity: 0.8 },
+        { x: trail2X, y: trail2Y, filter: trail2Filter, size: 1.5, opacity: 0.6 },
+        { x: trail3X, y: trail3Y, filter: trail3Filter, size: 1.25, opacity: 0.4 },
+        { x: trail4X, y: trail4Y, filter: trail4Filter, size: 1, opacity: 0.2 },
       ].map((trail, index) => (
         <motion.div
           key={index}
@@ -359,7 +365,7 @@ export function CursorFollower() {
             width: trail.size * 4,
             height: trail.size * 4,
             willChange: 'transform',
-            filter: useTransform(trail.blur, (val) => `blur(${val}px)`),
+            filter: trail.filter,
           }}
           animate={{
             opacity: isHovering ? trail.opacity * 1.2 : trail.opacity * 0.8,
