@@ -52,12 +52,12 @@ export function Hero() {
           return
         }
         
-        const width = rect.width
-        const height = rect.height
-        const mouseXRelative = (e.clientX - rect.left) / width - 0.5
-        const mouseYRelative = (e.clientY - rect.top) / height - 0.5
-        mouseX.set(mouseXRelative)
-        mouseY.set(mouseYRelative)
+      const width = rect.width
+      const height = rect.height
+      const mouseXRelative = (e.clientX - rect.left) / width - 0.5
+      const mouseYRelative = (e.clientY - rect.top) / height - 0.5
+      mouseX.set(mouseXRelative)
+      mouseY.set(mouseYRelative)
         rafId = null
       })
     }
@@ -82,7 +82,7 @@ export function Hero() {
         className="absolute inset-0 bg-gradient-to-br from-background via-[#0b0b14] to-[#050508]"
         style={{ y: backgroundY }}
       />
-
+      
       {/* Subtle mesh gradient - less animation */}
       <div 
         className="absolute inset-0 opacity-25"
@@ -90,7 +90,7 @@ export function Hero() {
           background: 'radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(0, 217, 255, 0.12) 0%, transparent 50%)',
         }}
       />
-
+      
       {/* Static grid overlay */}
       <div 
         className="absolute inset-0 opacity-[0.03]"
@@ -106,7 +106,7 @@ export function Hero() {
       {/* Two subtle orbs */}
       <motion.div 
         className="absolute top-[15%] left-[20%] w-[500px] h-[500px] rounded-full blur-3xl"
-        style={{
+        style={{ 
           background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
           x: useTransform(x, (val) => val * 0.3),
           y: useTransform(y, (val) => val * 0.3),
@@ -114,7 +114,7 @@ export function Hero() {
       />
       <motion.div 
         className="absolute bottom-[15%] right-[18%] w-[550px] h-[550px] rounded-full blur-3xl"
-        style={{
+        style={{ 
           background: 'radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%)',
           x: useTransform(x, (val) => val * -0.25),
           y: useTransform(y, (val) => val * -0.25),
@@ -131,9 +131,9 @@ export function Hero() {
           const baseY = Math.abs((Math.cos(seed) * 10000) % 1) * height
           const size = 2
           
-          return (
-            <motion.div
-              key={i}
+        return (
+          <motion.div
+            key={i}
               className="absolute rounded-full pointer-events-none z-0"
               style={{
                 width: `${size}px`,
@@ -143,20 +143,20 @@ export function Hero() {
                 background: i % 2 === 0 
                   ? 'rgba(139, 92, 246, 0.2)'
                   : 'rgba(0, 217, 255, 0.15)',
-              }}
-              animate={{
+            }}
+            animate={{
                 y: [0, -15, 0],
                 opacity: [0.15, 0.4, 0.15],
-              }}
-              transition={{
+            }}
+            transition={{
                 duration: 6 + i,
-                repeat: Infinity,
+              repeat: Infinity,
                 delay: seed,
-                ease: 'easeInOut',
-              }}
-            />
-          )
-        })}
+              ease: 'easeInOut',
+            }}
+          />
+        )
+      })}
 
       <motion.div 
         className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20"
@@ -237,20 +237,20 @@ export function Hero() {
             >
               <motion.h1 
                 className="text-6xl md:text-7xl lg:text-8xl font-black text-foreground leading-tight"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 1,
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 1,
                   delay: 0.4,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-              >
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
                 <motion.span
                   className="block"
                   initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5, duration: 0.8 }}
-                >
+              >
                   Web3
                 </motion.span>
                 <motion.span 
@@ -259,7 +259,7 @@ export function Hero() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ 
                     delay: 0.6,
-                    duration: 0.8,
+                    duration: 0.8, 
                     type: 'spring',
                     stiffness: 150,
                   }}
@@ -443,12 +443,12 @@ function ArchitectureDiagram() {
             stiffness: 100,
             damping: 15,
           }}
-          whileHover={{ 
-            x: 10,
-            scale: 1.02,
-            transition: { duration: 0.2 },
-          }}
-          className="relative group"
+            whileHover={{ 
+              x: 10,
+              scale: 1.02,
+              transition: { duration: 0.2 },
+            }}
+            className="relative group"
         >
           <motion.div
             className={`bg-gradient-to-r ${layer.color} border border-border/50 rounded-xl p-4 backdrop-blur-sm transition-all duration-300 group-hover:border-accent/50 group-hover:shadow-glow`}

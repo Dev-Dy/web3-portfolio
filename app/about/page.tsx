@@ -127,12 +127,12 @@ export default function AboutPage() {
           </motion.p>
           
           {/* Quick Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.6 }}
             className="flex flex-wrap justify-center gap-6 mb-8"
-          >
+      >
             <div className="flex items-center space-x-2 text-foreground/80">
               <MapPin className="w-5 h-5 text-accent" />
               <span>{personalInfo.location}</span>
@@ -386,7 +386,7 @@ export default function AboutPage() {
       >
         <div className="bg-gradient-to-br from-card/80 via-card/60 to-background/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 relative overflow-hidden group">
           {/* Animated background */}
-          <motion.div
+      <motion.div
             className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-accent-secondary/10 to-purple-500/10"
             animate={{
               backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
@@ -444,9 +444,9 @@ export default function AboutPage() {
         className="mb-20"
       >
         <div className="bg-gradient-to-br from-card/80 to-background/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Get in Touch</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6">Get in Touch</h2>
           <p className="text-foreground/80 mb-8 leading-relaxed max-w-2xl">
-            Interested in collaborating on Web3 projects, discussing blockchain architecture,
+          Interested in collaborating on Web3 projects, discussing blockchain architecture,
             or exploring decentralized systems? I'm always open to interesting conversations and opportunities.
           </p>
           
@@ -484,24 +484,24 @@ export default function AboutPage() {
           {/* Social Links */}
           <div>
             <label className="text-sm font-semibold text-foreground/60 mb-4 block uppercase tracking-wider">Connect</label>
-            <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4">
               <motion.a
-                href="https://github.com/dev-dy"
-                target="_blank"
-                rel="noopener noreferrer"
+            href="https://github.com/dev-dy"
+            target="_blank"
+            rel="noopener noreferrer"
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="flex items-center space-x-2 px-6 py-3 bg-background/50 border border-border/50 rounded-lg text-foreground hover:border-accent/50 hover:bg-background/70 transition-all font-medium group"
-              >
+          >
                 <Github className="w-5 h-5 group-hover:text-accent transition-colors" />
                 <span>GitHub</span>
               </motion.a>
               <motion.a
-                href="https://www.linkedin.com/in/dheeraj-yadav-113a19166"
-                target="_blank"
-                rel="noopener noreferrer"
+            href="https://www.linkedin.com/in/dheeraj-yadav-113a19166"
+            target="_blank"
+            rel="noopener noreferrer"
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="flex items-center space-x-2 px-6 py-3 bg-background/50 border border-border/50 rounded-lg text-foreground hover:border-accent/50 hover:bg-background/70 transition-all font-medium group"
-              >
+          >
                 <Linkedin className="w-5 h-5 group-hover:text-accent transition-colors" />
                 <span>LinkedIn</span>
               </motion.a>

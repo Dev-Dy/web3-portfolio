@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { motion } from 'framer-motion'
 import { Wallet, RefreshCw, PenLine, LogOut, Loader2, Copy, Check } from 'lucide-react'
 
@@ -19,54 +20,73 @@ export function WalletDetails() {
   const [isMounted, setIsMounted] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // Ensure client-side only - prevents hydration mismatch
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Fetch balance and network info
+  // Fetch balance and network info - only when wallet is connected
+  // Use rpcEndpoint string instead of connection object to avoid unnecessary re-runs
   useEffect(() => {
-    let mounted = true
-
-    if (connected && publicKey) {
-      setLoading(true)
-      setError(null)
-
-      connection.getBalance(publicKey)
-        .then((lamports) => {
-          if (mounted) {
-            setBalance(lamports / 1e9)
-            setLoading(false)
-          }
-        })
-        .catch((err) => {
-          if (mounted) {
-            console.error('Failed to fetch balance:', err)
-            setError('Failed to fetch balance')
-            setLoading(false)
-          }
-        })
-
-      // Detect network
-      const ep = connection.rpcEndpoint
-      if (ep.includes('devnet')) setNetwork('Devnet')
-      else if (ep.includes('mainnet')) setNetwork('Mainnet')
-      else setNetwork('Custom')
-    } else {
+    if (!connected || !publicKey) {
+      // Reset all state when disconnected
       setBalance(null)
       setAuthSig(null)
       setError(null)
+      setLoading(false)
+      setNetwork('')
+      return
     }
 
-    return () => { mounted = false }
-  }, [connected, publicKey, connection])
+    // Use ref flag to track if component is still mounted for cleanup
+    let mounted = true
+
+      setLoading(true)
+    setError(null)
+
+    // Fetch balance asynchronously - connection.getBalance is safe only when wallet is connected
+    connection.getBalance(publicKey)
+      .then((lamports) => {
+        // Check mounted flag before updating state to prevent memory leaks
+        if (mounted) {
+          // Use LAMPORTS_PER_SOL constant for consistency with other components
+          setBalance(lamports / LAMPORTS_PER_SOL)
+        setLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (mounted) {
+          console.error('Failed to fetch balance:', err)
+          setError('Failed to fetch balance')
+        setLoading(false)
+        }
+      })
+
+    // Detect network from endpoint string - stable string comparison
+    const endpoint = connection.rpcEndpoint
+    if (endpoint.includes('devnet')) {
+      setNetwork('Devnet')
+    } else if (endpoint.includes('mainnet')) {
+      setNetwork('Mainnet')
+    } else {
+      setNetwork('Custom')
+    }
+
+    // Cleanup: mark as unmounted to prevent state updates after component unmounts
+    return () => {
+      mounted = false
+    }
+  }, [connected, publicKey, connection.rpcEndpoint]) // Use rpcEndpoint string instead of connection object
 
   const refreshBalance = useCallback(async () => {
+    // Only allow refresh when wallet is connected - prevents errors
     if (!connected || !publicKey) return
     setLoading(true)
     setError(null)
     try {
       const lamports = await connection.getBalance(publicKey)
-      setBalance(lamports / 1e9)
+      // Use LAMPORTS_PER_SOL constant for consistency
+      setBalance(lamports / LAMPORTS_PER_SOL)
     } catch (err) {
       setError('Failed to refresh balance')
       console.error(err)
@@ -186,17 +206,17 @@ export function WalletDetails() {
                 {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
               </span>
             </div>
-            <button
+              <button
               onClick={copyAddress}
               className="p-2 hover:bg-accent/10 rounded-lg transition-colors"
               title="Copy address"
-            >
+              >
               {copied ? (
                 <Check className="w-4 h-4 text-green-500" />
               ) : (
                 <Copy className="w-4 h-4 text-foreground/60" />
               )}
-            </button>
+              </button>
           </div>
 
           {/* Balance */}
@@ -206,7 +226,7 @@ export function WalletDetails() {
               <span className="font-semibold text-lg">
                 {loading ? '...' : balance !== null ? `${balance.toFixed(4)} SOL` : '—'}
               </span>
-            </div>
+        </div>
             <button
               onClick={refreshBalance}
               disabled={loading}

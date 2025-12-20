@@ -24,7 +24,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body>
+      {/* suppressHydrationWarning: Ignore browser extensions (Grammarly, etc.) adding attributes to body */}
+      <body suppressHydrationWarning>
         <WalletProvider>
           <ClientLayout>
             <div className="min-h-screen flex flex-col bg-background w-full">
