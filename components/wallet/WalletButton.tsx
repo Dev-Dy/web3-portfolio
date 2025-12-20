@@ -71,24 +71,28 @@ export function WalletButton() {
 
   const handleConnect = useCallback(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:57',message:'handleConnect called',data:{setVisibleType:typeof setVisible},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
+    const logData = {setVisibleType:typeof setVisible,setVisibleExists:!!setVisible}
+    console.log('[WalletButton] handleConnect called', logData)
+    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:57',message:'handleConnect called',data:logData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
     // #endregion
     setConnectionError(null)
     try {
       // Open the wallet modal
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[WalletButton] Opening wallet modal...')
-      }
+      console.log('[WalletButton] Opening wallet modal...')
       // #region agent log
+      console.log('[WalletButton] Calling setVisible(true)')
       fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:64',message:'Calling setVisible(true)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
       // #endregion
       setVisible(true)
+      console.log('[WalletButton] setVisible(true) called successfully')
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:65',message:'setVisible(true) completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
       // #endregion
     } catch (error) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:66',message:'setVisible error',data:{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
+      const errorData = {error:String(error),errorMessage:error instanceof Error ? error.message : 'Unknown'}
+      console.error('[WalletButton] setVisible error', errorData)
+      fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletButton.tsx:66',message:'setVisible error',data:errorData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
       // #endregion
       console.error('[WalletButton] Failed to open wallet modal:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

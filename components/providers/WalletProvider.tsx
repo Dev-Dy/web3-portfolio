@@ -113,8 +113,10 @@ function WalletStateTracker() {
   const { visible, setVisible } = useWalletModal()
   
   useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletProvider.tsx:WalletStateTracker',message:'Wallet state changed',data:{connected,connecting,hasPublicKey:!!publicKey,walletName:wallet?.adapter?.name,modalVisible:visible},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{})
-  }, [connected, connecting, publicKey, wallet, visible])
+    const logData = {connected,connecting,hasPublicKey:!!publicKey,walletName:wallet?.adapter?.name,modalVisible:visible,hasSetVisible:typeof setVisible === 'function'}
+    console.log('[WalletStateTracker] Wallet state changed', logData)
+    fetch('http://127.0.0.1:7242/ingest/f26a7108-8da1-46ed-924d-6fa88678106c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WalletProvider.tsx:WalletStateTracker',message:'Wallet state changed',data:logData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{})
+  }, [connected, connecting, publicKey, wallet, visible, setVisible])
   
   return null
 }
