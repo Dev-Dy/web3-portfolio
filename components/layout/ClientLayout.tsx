@@ -20,10 +20,11 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
     // Suppress Chrome extension runtime.lastError messages (benign extension communication errors)
     // This prevents "Could not establish connection. Receiving end does not exist" console errors
-    if (typeof chrome !== 'undefined' && chrome.runtime) {
+    const chromeAPI = typeof window !== 'undefined' ? (window as any).chrome : undefined
+    if (chromeAPI?.runtime) {
       try {
         // Access chrome.runtime.lastError to clear it (prevents console warnings)
-        const lastError = chrome.runtime.lastError
+        const lastError = chromeAPI.runtime.lastError
         // Silently handle - this is expected when extensions communicate with pages
       } catch (e) {
         // Ignore
