@@ -41,7 +41,7 @@ export function WalletDetails() {
     // Use ref flag to track if component is still mounted for cleanup
     let mounted = true
 
-      setLoading(true)
+    setLoading(true)
     setError(null)
 
     // Fetch balance asynchronously - connection.getBalance is safe only when wallet is connected
@@ -51,14 +51,14 @@ export function WalletDetails() {
         if (mounted) {
           // Use LAMPORTS_PER_SOL constant for consistency with other components
           setBalance(lamports / LAMPORTS_PER_SOL)
-        setLoading(false)
+          setLoading(false)
         }
       })
       .catch((err) => {
         if (mounted) {
           console.error('Failed to fetch balance:', err)
           setError('Failed to fetch balance')
-        setLoading(false)
+          setLoading(false)
         }
       })
 
