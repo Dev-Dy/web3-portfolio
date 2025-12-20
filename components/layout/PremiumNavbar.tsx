@@ -23,8 +23,12 @@ export function PremiumNavbar() {
   const [activeSection, setActiveSection] = useState('')
   const { scrollY } = useScroll()
 
+  // Throttle scroll updates to improve performance
   useMotionValueEvent(scrollY, 'change', (latest) => {
-    setScrolled(latest > 50)
+    // Use requestAnimationFrame to batch state updates
+    requestAnimationFrame(() => {
+      setScrolled(latest > 50)
+    })
   })
 
   useEffect(() => {

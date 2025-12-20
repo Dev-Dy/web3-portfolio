@@ -26,9 +26,10 @@ export function Hero() {
   const x = useSpring(useTransform(mouseX, [-0.5, 0.5], [-30, 30]), springConfig)
   const y = useSpring(useTransform(mouseY, [-0.5, 0.5], [-30, 30]), springConfig)
   
-  // Parallax transforms - safe defaults (will be 0 until mounted)
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '50%'], { clamp: false })
-  const textY = useTransform(scrollYProgress, [0, 1], ['0%', '30%'], { clamp: false })
+  // Reduced parallax intensity for better scroll performance
+  // Using smaller values and clamp to prevent excessive calculations
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '20%'], { clamp: true })
+  const textY = useTransform(scrollYProgress, [0, 1], ['0%', '10%'], { clamp: true })
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -36,19 +37,38 @@ export function Hero() {
   }, [])
 
   useEffect(() => {
+    let rafId: number | null = null
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (!ref.current) return
-      const rect = ref.current.getBoundingClientRect()
-      const width = rect.width
-      const height = rect.height
-      const mouseXRelative = (e.clientX - rect.left) / width - 0.5
-      const mouseYRelative = (e.clientY - rect.top) / height - 0.5
-      mouseX.set(mouseXRelative)
-      mouseY.set(mouseYRelative)
+      
+      // Throttle mouse move updates using requestAnimationFrame
+      if (rafId !== null) return
+      
+      rafId = requestAnimationFrame(() => {
+        const rect = ref.current?.getBoundingClientRect()
+        if (!rect) {
+          rafId = null
+          return
+        }
+        
+        const width = rect.width
+        const height = rect.height
+        const mouseXRelative = (e.clientX - rect.left) / width - 0.5
+        const mouseYRelative = (e.clientY - rect.top) / height - 0.5
+        mouseX.set(mouseXRelative)
+        mouseY.set(mouseYRelative)
+        rafId = null
+      })
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
+    }
   }, [mouseX, mouseY])
 
   return (
@@ -140,7 +160,10 @@ export function Hero() {
 
       <motion.div 
         className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20"
-        style={{ y: textY }}
+        style={{ 
+          y: textY,
+          willChange: 'transform', // Optimize for scroll performance
+        }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left: Text Content */}
