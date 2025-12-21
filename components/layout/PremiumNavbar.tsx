@@ -133,7 +133,7 @@ export function PremiumNavbar() {
                   {/* Enhanced active indicator */}
                   {isActive && (
                     <motion.div
-                      layoutId="activeNavPremium"
+                      layoutId={`activeNavPremium-${item.href}`}
                       className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-accent-secondary/20 to-purple-500/20 border border-purple-400/40 rounded-xl"
                       initial={false}
                       transition={{
@@ -154,7 +154,7 @@ export function PremiumNavbar() {
                   {isActive && (
                     <motion.div
                       className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent rounded-full"
-                      layoutId="activeLine"
+                      layoutId={`activeLine-${item.href}`}
                       initial={false}
                       transition={{
                         type: 'spring',
@@ -254,7 +254,7 @@ export function PremiumNavbar() {
                       {isActive && (
                         <motion.div
                           className="absolute right-4 w-2 h-2 bg-accent rounded-full"
-                          layoutId="mobileActive"
+                          layoutId={`mobileActive-${item.href}`}
                           initial={false}
                         />
                       )}

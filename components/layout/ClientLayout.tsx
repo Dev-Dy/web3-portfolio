@@ -18,19 +18,35 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     }
 
+    // Suppress Chrome extension runtime.lastError messages (benign extension communication errors)
+    // This prevents "Could not establish connection. Receiving end does not exist" console errors
+    const chromeAPI = typeof window !== 'undefined' ? (window as any).chrome : undefined
+    if (chromeAPI?.runtime) {
+      try {
+        // Access chrome.runtime.lastError to clear it (prevents console warnings)
+        const lastError = chromeAPI.runtime.lastError
+        // Silently handle - this is expected when extensions communicate with pages
+      } catch (e) {
+        // Ignore
+      }
+    }
+
     // Global error handler to suppress wallet extension content script errors
     // These errors come from wallet extensions (Phantom, Solflare, etc.) and are not actionable
     const handleError = (event: ErrorEvent) => {
       const errorMessage = event.message || String(event.error)
       const errorSource = event.filename || ''
       
-      // Suppress wallet extension content script errors
+      // Suppress wallet extension content script errors and Chrome extension communication errors
       if (
         errorMessage.includes('solanaActionsContentScript') ||
         errorMessage.includes('Something went wrong') ||
         errorSource.includes('solanaActionsContentScript') ||
         errorSource.includes('inpage.js') ||
-        errorMessage.includes('StreamMiddleware')
+        errorMessage.includes('StreamMiddleware') ||
+        errorMessage.includes('runtime.lastError') ||
+        errorMessage.includes('Receiving end does not exist') ||
+        errorMessage.includes('Could not establish connection')
       ) {
         event.preventDefault()
         return false
@@ -52,13 +68,28 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         reasonMessage = String(reason)
       }
       
-      // Suppress wallet extension errors
+      // Suppress non-actionable wallet extension errors
       if (
         reasonMessage.includes('solanaActionsContentScript') ||
         reasonMessage.includes('Something went wrong') ||
-        reasonMessage.includes('StreamMiddleware')
+        reasonMessage.includes('StreamMiddleware') ||
+        reasonMessage.includes('runtime.lastError') ||
+        reasonMessage.includes('Could not establish connection') ||
+        reasonMessage.includes('Receiving end does not exist')
       ) {
         event.preventDefault()
+        return
+      }
+
+      // Handle MetaMask connection errors specifically (MetaMask is not Solana-compatible)
+      if (reasonMessage.includes('MetaMask') || reasonMessage.includes('Failed to connect to MetaMask')) {
+        // Store error message for WalletButton to display
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('walletConnectionError', '❌ MetaMask is not a Solana wallet. Please use a Solana-compatible wallet like Phantom or Solflare. If you want to use MetaMask, install the Solana Snap first.')
+        }
+        event.preventDefault()
+        console.warn('[ClientLayout] MetaMask connection attempt blocked (not Solana-compatible)')
+        return
       }
     }
 

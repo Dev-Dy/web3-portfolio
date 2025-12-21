@@ -3,83 +3,256 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { useConnection } from '@solana/wallet-adapter-react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { motion } from 'framer-motion'
 import { Wallet, LogOut, Loader2 } from 'lucide-react'
 
 export function WalletButton() {
   const { wallet, publicKey, disconnect, connected, connecting } = useWallet()
-  const { setVisible } = useWalletModal()
+  const { setVisible, visible } = useWalletModal()
   const { connection } = useConnection()
   const [balance, setBalance] = useState<number | null>(null)
   const [network, setNetwork] = useState<string>('')
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
+  const [modalOpenAttempted, setModalOpenAttempted] = useState(false)
 
-  // Ensure client-side only
+  // Ensure client-side only - prevents hydration mismatch
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Fetch balance when connected
+  // Diagnostic: Log modal state changes for debugging
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[WalletButton] Modal state changed:', {
+        visible,
+        setVisibleType: typeof setVisible,
+        modalOpenAttempted,
+        hasWallet: !!wallet,
+      })
+    }
+  }, [visible, setVisible, modalOpenAttempted, wallet])
+
+  // Monitor modal state - provide feedback if modal doesn't open after setVisible(true)
+  useEffect(() => {
+    if (modalOpenAttempted && !visible) {
+      // Modal was requested to open but didn't actually open
+      const timeout = setTimeout(() => {
+        if (!visible) {
+          // Check if modal element exists in DOM
+          const modalElement = document.querySelector('[class*="wallet-adapter-modal"]') || 
+                              document.querySelector('[class*="WalletModal"]')
+          
+          if (!modalElement) {
+            setConnectionError(
+              'Modal component not found in DOM. WalletModalProvider may not be rendering WalletModal. Check provider setup.'
+            )
+          } else {
+            setConnectionError(
+              'Modal exists but is not visible. Possible causes: CSS hiding modal (display:none, opacity:0), z-index too low, or modal rendered outside viewport.'
+            )
+          }
+        }
+      }, 500) // Wait 500ms to see if modal opens
+      
+      return () => clearTimeout(timeout)
+    } else if (visible) {
+      // Modal opened successfully, clear any errors
+      setConnectionError(null)
+      setModalOpenAttempted(false)
+    }
+  }, [visible, modalOpenAttempted])
+
+  // Fetch balance when connected - use rpcEndpoint string instead of connection object to avoid unnecessary re-runs
+  // Only fetch when wallet is actually connected and publicKey is available
+  useEffect(() => {
+    if (!connected || !publicKey) {
+      setBalance(null)
+      setNetwork('')
+      return
+    }
+
+    // Use ref to track if component is still mounted for cleanup
     let mounted = true
     
-    if (connected && publicKey) {
-      connection.getBalance(publicKey)
-        .then((lamports) => {
-          if (mounted) setBalance(lamports / LAMPORTS_PER_SOL)
-        })
-        .catch((err) => {
-          console.error('Failed to fetch balance:', err)
-          if (mounted) setBalance(null)
-        })
+    // Fetch balance asynchronously - connection.getBalance is safe to call only when wallet is connected
+    connection.getBalance(publicKey)
+      .then((lamports) => {
+        // Check mounted flag before updating state to prevent memory leaks
+        if (mounted) {
+        setBalance(lamports / LAMPORTS_PER_SOL)
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch balance:', err)
+        // Only update state if component is still mounted
+        if (mounted) {
+          setBalance(null)
+        }
+      })
 
-      // Detect network
+    // Detect network from endpoint string - stable string comparison
       const endpoint = connection.rpcEndpoint
       if (endpoint.includes('devnet')) {
         setNetwork('Devnet')
       } else if (endpoint.includes('mainnet')) {
         setNetwork('Mainnet')
       } else {
-        setNetwork('Testnet')
-      }
-    } else {
-      setBalance(null)
-      setNetwork('')
+      setNetwork('Testnet')
     }
 
-    return () => { mounted = false }
-  }, [connected, publicKey, connection])
+    // Cleanup: mark as unmounted to prevent state updates after component unmounts
+    return () => {
+      mounted = false
+    }
+  }, [connected, publicKey, connection.rpcEndpoint]) // Use rpcEndpoint string instead of connection object
 
   const handleConnect = useCallback(() => {
     setConnectionError(null)
+    setModalOpenAttempted(true)
+    
     try {
-      // Open the wallet modal
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[WalletButton] Opening wallet modal...')
+      // Scenario 1: setVisible is undefined or null
+      if (setVisible === undefined || setVisible === null) {
+        const errorMsg = '❌ WalletModalProvider not properly initialized. setVisible function is missing. Check that WalletModalProvider wraps your app.'
+        console.error('[WalletButton] Scenario 1:', errorMsg)
+        setConnectionError(errorMsg)
+        return
       }
+
+      // Scenario 2: setVisible is not a function
+      if (typeof setVisible !== 'function') {
+        const errorMsg = `❌ WalletModalProvider configuration error. setVisible is "${typeof setVisible}", expected "function". This usually means WalletModalProvider is not set up correctly.`
+        console.error('[WalletButton] Scenario 2:', errorMsg, { setVisible })
+        setConnectionError(errorMsg)
+        return
+      }
+
+      // Scenario 3: Wallet is already connected (shouldn't happen, but check anyway)
+      if (connected) {
+        console.warn('[WalletButton] Wallet already connected, modal should not open')
+        setConnectionError(null)
+        return
+      }
+
+      // Scenario 4: Check if we're in the right context (WalletModalProvider should be wrapping this)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[WalletButton] Attempting to open wallet modal...', {
+          setVisibleType: typeof setVisible,
+          currentVisible: visible,
+          hasWallet: !!wallet,
+          connecting,
+        })
+      }
+
+      // Try to open the modal
       setVisible(true)
+
+      // Verify modal opened (check after a brief delay)
+      setTimeout(() => {
+        if (!visible && modalOpenAttempted) {
+          // Scenario 5: setVisible called but modal didn't actually open
+          // Check if modal element exists in DOM
+          const modalElement = document.querySelector('[class*="wallet-adapter-modal"]') || 
+                              document.querySelector('[id*="wallet-modal"]') ||
+                              document.querySelector('[role="dialog"]')
+          
+          if (!modalElement) {
+            const errorMsg = '❌ Modal component not found in DOM. WalletModalProvider may not be rendering WalletModal component. Check provider setup in WalletProvider.tsx'
+            console.error('[WalletButton] Scenario 5a:', errorMsg)
+            setConnectionError(errorMsg)
+          } else {
+            const errorMsg = '❌ Modal exists in DOM but is not visible. Possible causes: CSS hiding modal (display:none, opacity:0), z-index too low, or modal rendered outside viewport. Check browser DevTools.'
+            console.error('[WalletButton] Scenario 5b:', errorMsg, { modalElement })
+            setConnectionError(errorMsg)
+          }
+        }
+      }, 300)
+
     } catch (error) {
-      console.error('[WalletButton] Failed to open wallet modal:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setConnectionError(`Failed to open wallet selection: ${errorMessage}. Please ensure your wallet extension is installed and try again.`)
+      // Scenario 6: setVisible threw an error
+      console.error('[WalletButton] Scenario 6: Exception calling setVisible:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      
+      let userMessage = '❌ Failed to open wallet selection modal.'
+      
+      if (errorMessage.includes('Cannot read') || errorMessage.includes('undefined') || errorMessage.includes('null')) {
+        userMessage = '❌ WalletModalProvider not properly initialized. Component context is missing. Please refresh the page and ensure WalletModalProvider wraps your app.'
+      } else if (errorMessage.includes('Provider') || errorMessage.includes('context')) {
+        userMessage = '❌ Wallet provider configuration error. Check that WalletModalProvider is properly set up in WalletProvider.tsx and wraps all components using useWalletModal.'
+      } else if (errorMessage.includes('render')) {
+        userMessage = '❌ Modal rendering error. Check browser console for React errors or CSS conflicts.'
+    } else {
+        userMessage = `❌ Error: ${errorMessage}. Please refresh the page and try again. If issue persists, check browser console (F12).`
+      }
+      
+      setConnectionError(userMessage)
     }
-  }, [setVisible])
+  }, [setVisible, visible, connected, wallet, connecting, modalOpenAttempted])
+
+  // Track previous connecting state to detect connection failures
+  const prevConnectingRef = useRef(connecting)
+
+  // Listen for connection errors from WalletProvider
+  useEffect(() => {
+    const checkForStoredError = () => {
+      if (typeof window !== 'undefined') {
+        const storedError = sessionStorage.getItem('walletConnectionError')
+        if (storedError) {
+          setConnectionError(storedError)
+          sessionStorage.removeItem('walletConnectionError')
+        }
+      }
+    }
+
+    // Check immediately and periodically (if error is set from WalletProvider's onError)
+    checkForStoredError()
+    const interval = setInterval(checkForStoredError, 500) // Check every 500ms
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Monitor connection state changes and handle errors
+  useEffect(() => {
+    // Clear error when connection succeeds
+    if (connected) {
+      setConnectionError(null)
+      setModalOpenAttempted(false)
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('walletConnectionError')
+      }
+    }
+
+    // Detect connection failure: was connecting, now not connecting and not connected
+    const wasConnecting = prevConnectingRef.current
+    if (wasConnecting && !connecting && !connected) {
+      // Connection attempt failed - check for stored error message
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          const storedError = sessionStorage.getItem('walletConnectionError')
+          if (!storedError && !connected) {
+            // No specific error message - provide generic helpful message
+            setConnectionError('❌ Connection failed. Please try: 1) Ensure wallet extension is unlocked, 2) Approve the connection request, 3) Try a different wallet if the issue persists.')
+          }
+        }
+      }, 500)
+    }
+
+    prevConnectingRef.current = connecting
+  }, [connected, connecting])
 
   // Add timeout for connecting state to prevent infinite loading
   useEffect(() => {
     if (connecting) {
       const timeout = setTimeout(() => {
         console.warn('[WalletButton] Connection timeout - taking longer than 30 seconds')
-        setConnectionError('Connection is taking longer than expected. Please try again or check your wallet extension.')
+        setConnectionError('❌ Connection timeout: Wallet is taking too long to respond. Please try: 1) Refresh the page, 2) Check wallet extension is unlocked, 3) Try a different wallet.')
       }, 30000) // 30 second timeout
 
       return () => clearTimeout(timeout)
-    } else {
-      setConnectionError(null)
     }
   }, [connecting])
 
@@ -155,7 +328,7 @@ export function WalletButton() {
 
   // Connecting state
   if (connecting) {
-    return (
+  return (
       <div className="flex flex-col items-end space-y-2">
         <motion.button
           disabled
@@ -167,7 +340,16 @@ export function WalletButton() {
           <span>Connecting...</span>
         </motion.button>
         {connectionError && (
-          <p className="text-xs text-red-400 max-w-xs text-right">{connectionError}</p>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg max-w-xs text-right"
+          >
+            <p className="text-xs text-red-400 font-medium">{connectionError}</p>
+            <p className="text-xs text-red-400/70 mt-1">
+              💡 Tip: Check browser console (F12) for detailed error information.
+            </p>
+          </motion.div>
         )}
       </div>
     )
@@ -186,7 +368,16 @@ export function WalletButton() {
         <span>Connect Wallet</span>
       </motion.button>
       {connectionError && (
-        <p className="text-xs text-red-400 max-w-xs text-right">{connectionError}</p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg max-w-xs text-right"
+        >
+          <p className="text-xs text-red-400 font-medium">{connectionError}</p>
+          <p className="text-xs text-red-400/70 mt-1">
+            💡 Tip: Check browser console (F12) for detailed error information.
+          </p>
+        </motion.div>
       )}
     </div>
   )
