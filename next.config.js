@@ -2,19 +2,62 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Performance optimizations (only for production)
-  swcMinify: true,
-  compress: process.env.NODE_ENV === 'production',
+  // Performance optimizations
+  compress: true, // Enable compression for all environments
+  poweredByHeader: false, // Remove X-Powered-By header
   
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
   },
+  
+  // Enable SWC minification for better performance
+  swcMinify: true,
+  
+  // Production source maps (for debugging in production)
+  productionBrowserSourceMaps: false, // Set to true if you need production debugging
   
   // Disable experimental features in dev for faster compilation
   experimental: {
     // optimizeCss requires critters package - disabled to avoid build errors
     // optimizeCss: process.env.NODE_ENV === 'production',
+  },
+  
+  // Headers for better caching and security
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin'
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ]
   },
   
   // Faster TypeScript checking in dev
@@ -56,42 +99,63 @@ const nextConfig = {
       })
     }
 
-    // Only apply complex optimizations in production
-    if (!dev) {
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Separate Solana libraries
-            solana: {
-              name: 'solana',
-              test: /[\\/]node_modules[\\/]@solana[\\/]/,
-              priority: 20,
-              reuseExistingChunk: true,
-            },
-            // Separate wallet adapters
-            walletAdapter: {
-              name: 'wallet-adapter',
-              test: /[\\/]node_modules[\\/]@solana[\\/]wallet-adapter[\\/]/,
-              priority: 15,
-              reuseExistingChunk: true,
-            },
-            // Common vendor chunk
-            vendor: {
-              name: 'vendor',
-              test: /[\\/]node_modules[\\/]/,
-              priority: 10,
-              reuseExistingChunk: true,
-            },
+    // Optimize bundle splitting for both dev and production
+    config.optimization = {
+      ...config.optimization,
+      moduleIds: 'deterministic',
+      runtimeChunk: 'single',
+      splitChunks: {
+        chunks: 'all',
+        maxInitialRequests: 25,
+        minSize: 20000,
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          // Separate framer-motion (heavy animation library)
+          framerMotion: {
+            name: 'framer-motion',
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            priority: 30,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          // Separate Solana libraries
+          solana: {
+            name: 'solana',
+            test: /[\\/]node_modules[\\/]@solana[\\/]/,
+            priority: 20,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          // Separate wallet adapters
+          walletAdapter: {
+            name: 'wallet-adapter',
+            test: /[\\/]node_modules[\\/]@solana[\\/]wallet-adapter[\\/]/,
+            priority: 15,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          // React and React DOM
+          react: {
+            name: 'react',
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            priority: 25,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          // Common vendor chunk (smaller libraries)
+          vendor: {
+            name: 'vendor',
+            test: /[\\/]node_modules[\\/]/,
+            priority: 10,
+            minChunks: 2,
+            reuseExistingChunk: true,
           },
         },
-      }
-    } else {
+      },
+    }
+    
+    if (dev) {
       // Faster dev builds - simpler optimization
       config.optimization = {
         ...config.optimization,

@@ -96,9 +96,9 @@ export function ArchitectureOverview() {
                   <div className="md:col-span-1">
                     <div className="flex items-center space-x-2 mb-3">
                       <div className="w-1 h-6 bg-gradient-to-b from-accent to-accent-dark rounded-full" />
-                      <h3 className="text-xl font-bold text-foreground">
+                      <h2 className="text-xl font-bold text-foreground">
                         {layer.name}
-                      </h3>
+                      </h2>
                     </div>
                     <p className="text-sm text-foreground/80 mb-5 leading-relaxed">
                       {layer.description}
@@ -145,9 +145,9 @@ export function ArchitectureOverview() {
         >
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-1 h-8 bg-gradient-to-b from-accent to-accent-dark rounded-full" />
-            <h3 className="text-2xl font-bold text-foreground">
+            <h2 className="text-2xl font-bold text-foreground">
               Design Principles
-            </h3>
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
