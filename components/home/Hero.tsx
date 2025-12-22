@@ -377,7 +377,8 @@ export function Hero() {
               <motion.div
                 className="absolute inset-0 rounded-2xl"
                 style={{
-                  background: 'linear-gradient(45deg, transparent, rgba(var(--accent-rgb), 0.1), transparent)',
+                  // Use CSS Color 4 rgb() with alpha instead of nesting var() in rgba()
+                  background: 'linear-gradient(45deg, transparent, rgb(var(--accent-rgb) / 0.1), transparent)',
                   backgroundSize: '200% 200%',
                 }}
                 animate={{
@@ -453,7 +454,8 @@ function ArchitectureDiagram() {
           <motion.div
             className={`bg-gradient-to-r ${layer.color} border border-border/50 rounded-xl p-4 backdrop-blur-sm transition-all duration-300 group-hover:border-accent/50 group-hover:shadow-glow`}
             whileHover={{
-              boxShadow: '0 0 20px rgba(var(--accent-rgb), 0.3)',
+              // Use rgb(var(--accent-rgb) / alpha) for valid CSS with custom properties
+              boxShadow: '0 0 20px rgb(var(--accent-rgb) / 0.3)',
             }}
           >
             <div className="flex items-center space-x-3">

@@ -105,7 +105,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
+    // @ts-ignore - React 18 type compatibility issue with @solana/wallet-adapter-react
     <ConnectionProvider endpoint={endpoint}>
+      {/* @ts-ignore - React 18 type compatibility issue with @solana/wallet-adapter-react */}
       <SolanaWalletProvider
         wallets={wallets}
         autoConnect={false}
